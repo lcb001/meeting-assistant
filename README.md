@@ -1,2 +1,2 @@
-# meetin-assistant
+# meeting-assistant
 基于eino的ai-agent项目
