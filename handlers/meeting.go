@@ -20,7 +20,7 @@ import (
 	"github.com/hertz-contrib/sse"
 )
 
-var meetings []models.Meeting
+// var meetings []models.Meeting
 var summary *schema.Message
 var textAll map[string]interface{}
 var HistoryChat map[string]interface{}
@@ -78,7 +78,10 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	messages3 := myllm.CreateMessagesFromTemplate("summary", allText, "", nil)
 	cm3 := myllm.CreateArkChatModel(ctx)
 	summary = myllm.Generate(ctx, cm3, messages3)
-	meetings = append(meetings, models.Meeting{
+
+	fmt.Printf("summary: %s\n", summary.Content)
+
+	store.Meetings = append(store.Meetings, models.Meeting{
 		ID: "meeting_" + time.Now().Format("20060102150405"),
 		Content: map[string]interface{}{
 			"title":        title.Content,       // LLM 总结
@@ -106,8 +109,10 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	if summarymap == nil {
 		summarymap = make(map[string]interface{})
 	}
-	summarymap[response.ID] = summary
-
+	//summarymap[response.ID] = summary
+	summarymap[response.ID] = []*schema.Message{
+		summary,
+	}
 	c.JSON(consts.StatusOK, response)
 }
 
@@ -154,9 +159,9 @@ func GetMeetingSummary(ctx context.Context, c *app.RequestContext) {
 	// 4. 会议内容
 	// 5. 关键任务提取
 	// 6. 关键任务管理器
-
+	content := summarymap[meetingID].([]*schema.Message)[0].Content
 	response := map[string]interface{}{
-		"content": summarymap[meetingID],
+		"content": content,
 	}
 
 	c.JSON(consts.StatusOK, response)
