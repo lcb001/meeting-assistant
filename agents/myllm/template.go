@@ -18,6 +18,7 @@ package myllm
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/cloudwego/eino/components/prompt"
@@ -28,13 +29,13 @@ func createTemplate(funcType string) prompt.ChatTemplate {
 	systemMessage := ""
 
 	if funcType == "title" {
-		systemMessage = "你是一个{role}，你需要用{style}的语言总结会议主题。请注意，直接输出会议主题，前面不需要前缀（如会议主题：）会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
+		systemMessage = "你是一个{role}，你需要用{style}的语言总结会议主题。请注意，直接输出会议主题，前面不需要前缀（如会议主题：），会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	} else if funcType == "description" {
-		systemMessage = "你是一个{role}，你需要用{style}的语言总结核心议程。请注意，直接输出核心议程，前面不需要前缀（如核心议程：）会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
+		systemMessage = "你是一个{role}，你需要用{style}的语言总结核心议程。请注意，直接输出核心议程，前面不需要前缀（如核心议程：），会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	} else if funcType == "summary" {
-		systemMessage = "你是一个{role}，你需要用{style}的语言提炼会议内容。请注意，会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
+		systemMessage = "你是一个{role}，你需要用{style}的语言提炼会议摘要。至少包括以下内容1. 会议主题 2. 会议参与者3. 会议时间4. 会议内容5. 关键任务提取(这部分必须以以下格式总结，小红的任务是扫地，把其中的人称代词转换成具体的负责人，且需要把相同人们的做的事组合在一起，比如小红的任务是扫地、拖地)。请注意，直接输出会议摘要，前面不需要前缀（如会议摘要：），会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	} else if funcType == "chat" {
-
+		systemMessage = "你是一个{role}，你需要用{style}的语言。请注意，你需要结合会议的全文，回答用户问题，会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	}
 
 	// 创建模板，使用 FString 格式
@@ -46,57 +47,41 @@ func createTemplate(funcType string) prompt.ChatTemplate {
 		schema.MessagesPlaceholder("chat_history", true),
 
 		// 用户消息模板
-		schema.UserMessage("会议内容: {question}"),
+		schema.UserMessage("{question}"),
 	)
 }
 
-func CreateMessagesFromTemplate(funcType string, allText string) []*schema.Message {
+func CreateMessagesFromTemplate(funcType string, allText string, ask string, HistoryChat []*schema.Message) []*schema.Message {
 	template := createTemplate(funcType)
-	//contents := input["contents"].([]interface{})
-	////lastItem := contents[len(contents)-1].(map[string]interface{})
-	//var allText string
-	//for _, contentItem := range contents {
-	//	// 将每个内容项转换为 map[string]interface{} 类型
-	//	itemMap, ok := contentItem.(map[string]interface{})
-	//	if !ok {
-	//		fmt.Println("转换内容项类型失败")
-	//		continue
-	//	}
-	//	user, ok := itemMap["user"].(string)
-	//	if !ok {
-	//		fmt.Println("获取 user 失败")
-	//		continue
-	//	}
-	//	// 获取 content 字段
-	//	content, ok := itemMap["content"].(map[string]interface{})
-	//	if !ok {
-	//		fmt.Println("获取 content 失败")
-	//		continue
-	//	}
-	//	text, ok := content["text"].(string)
-	//	if !ok {
-	//		fmt.Println("获取 text 失败")
-	//		continue
-	//	}
-	//	allText += user + "说：" + text
-	//}
+	//创建一个字符串，如果ask不为空，则为alltext+ask，若为空则为alltext
+	question := allText
+	if ask != "" {
+		question += ("下面是我的问题：" + ask)
+	}
+	fmt.Printf("HistoryChat2: %s", HistoryChat)
+	for _, v := range HistoryChat {
+		fmt.Printf("HistoryChat3: %s", v.Content)
+	}
 	// 使用模板生成消息
 	messages, err := template.Format(context.Background(), map[string]any{
 		"role":  "会议总结助手",
 		"style": "专业",
 		//"question": "我的代码一直报错，感觉好沮丧，该怎么办？",
-		"question": allText,
+		"question": question,
 		// 对话历史（这个例子里模拟两轮对话历史）
 		//"chat_history": []*schema.Message{
-		//	schema.UserMessage("你好"),
-		//	schema.AssistantMessage("嘿！我是你的程序员鼓励师！记住，每个优秀的程序员都是从 Debug 中成长起来的。有什么我可以帮你的吗？", nil),
-		//	schema.UserMessage("我觉得自己写的代码太烂了"),
-		//	schema.AssistantMessage("每个程序员都经历过这个阶段！重要的是你在不断学习和进步。让我们一起看看代码，我相信通过重构和优化，它会变得更好。记住，Rome wasn't built in a day，代码质量是通过持续改进来提升的。", nil),
+		//	schema.UserMessage("bob在踢球吗"),
+		//	schema.AssistantMessage("bob很用力的踢球", nil),
+		//	schema.UserMessage("rich在跑步吗"),
+		//	schema.AssistantMessage("rich在飞快的跑步", nil),
 		//},
+		"chat_history": HistoryChat,
 	})
+
 	if err != nil {
 		log.Fatalf("format template failed: %v\n", err)
 	}
+
 	return messages
 }
 

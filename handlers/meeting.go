@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cloudwego/eino/schema"
+	"io"
+	"log"
 	"time"
 
 	"meetingagent/agents/myllm"
@@ -17,6 +20,27 @@ import (
 )
 
 var meetings []models.Meeting
+var summary *schema.Message
+var textAll map[string]interface{}
+var HistoryChat map[string]interface{}
+var message *schema.Message
+var messagess []*schema.Message
+
+func streamoutput(title *schema.StreamReader[*schema.Message]) {
+	i := 0
+	for {
+		var err error
+		message, err = title.Recv()
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			log.Fatalf("recv failed: %v", err)
+		}
+		log.Printf("message[%d]: %+v\n", i, message)
+		i++
+	}
+}
 
 // CreateMeeting handles the creation of a new meeting
 func CreateMeeting(ctx context.Context, c *app.RequestContext) {
@@ -39,14 +63,19 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	participants := myutils.ExtractMeetingParticipants(reqBody)
 	startTime, endTime := myutils.ExtractBeginAndEndTime(reqBody)
 	allText := myutils.ExtractALLtext(reqBody)
-	messages1 := myllm.CreateMessagesFromTemplate("title", allText)
+
+	messages1 := myllm.CreateMessagesFromTemplate("title", allText, "", nil)
 	cm1 := myllm.CreateArkChatModel(ctx)
 	title := myllm.Generate(ctx, cm1, messages1)
+	//title := myllm.Stream(ctx, cm1, messages1)
 
-	messages2 := myllm.CreateMessagesFromTemplate("description", allText)
+	messages2 := myllm.CreateMessagesFromTemplate("description", allText, "", nil)
 	cm2 := myllm.CreateArkChatModel(ctx)
 	description := myllm.Generate(ctx, cm2, messages2)
 
+	messages3 := myllm.CreateMessagesFromTemplate("summary", allText, "", nil)
+	cm3 := myllm.CreateArkChatModel(ctx)
+	summary = myllm.Generate(ctx, cm3, messages3)
 	meetings = append(meetings, models.Meeting{
 		ID: "meeting_" + time.Now().Format("20060102150405"),
 		Content: map[string]interface{}{
@@ -60,9 +89,15 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	})
 
 	// TODO: Implement actual meeting creation logic
-
 	response := models.PostMeetingResponse{
 		ID: "meeting_" + time.Now().Format("20060102150405"),
+	}
+	//在textAll中存储每个meetingID的alltext
+	if textAll == nil {
+		textAll = make(map[string]interface{})
+	}
+	textAll[response.ID] = []*schema.Message{
+		schema.UserMessage("这是会议的全文:" + allText),
 	}
 
 	c.JSON(consts.StatusOK, response)
@@ -113,12 +148,7 @@ func GetMeetingSummary(ctx context.Context, c *app.RequestContext) {
 	// 6. 关键任务管理器
 
 	response := map[string]interface{}{
-		"content": `
-		Meeting summary for ` + meetingID + `## Summary
-we talked about the project and the next steps, we will have a call next week to discuss the project in more detail.
-
-......
-		`,
+		"content": summary.Content,
 	}
 
 	c.JSON(consts.StatusOK, response)
@@ -151,8 +181,29 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 	stream := sse.NewStream(c)
 
 	// TODO: Implement actual chat logic
+	//if HistoryChat == nil {
+	HistoryChat = make(map[string]interface{})
+	//}
+	//HistoryChat[meetingID] = []*schema.Message{
+	//	schema.UserMessage(message),
+	//}
+
+	messagess = append(messagess, schema.UserMessage(message))
+	HistoryChat[meetingID] = messagess
+	messages := myllm.CreateMessagesFromTemplate("chat", textAll[meetingID].([]*schema.Message)[0].Content, message, HistoryChat[meetingID].([]*schema.Message))
+
+	cm := myllm.CreateArkChatModel(ctx)
+	msg := myllm.Generate(ctx, cm, messages)
+	fmt.Printf("msg: %s", msg.Content)
+
+	//HistoryChat[meetingID] = []*schema.Message{
+	//	schema.AssistantMessage(msg.Content, nil),
+	//}
+	messagess = append(messagess, schema.AssistantMessage(msg.Content, nil))
+	HistoryChat[meetingID] = messagess
+	fmt.Printf("HistoryChat: %s", HistoryChat[meetingID].([]*schema.Message))
 	// This is a simple example that sends a message every second
-	ticker := time.NewTicker(time.Millisecond * 100)
+	ticker := time.NewTicker(time.Millisecond * 1000)
 	stopChan := make(chan struct{})
 	go func() {
 		time.AfterFunc(time.Second, func() {
@@ -161,13 +212,13 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 		})
 	}()
 
-	msg := fmt.Sprintf("Fake sample chat message: %s\n", time.Now().Format(time.RFC3339))
-
+	//msg1 := fmt.Sprintf("Fake sample chat message: %s\n", time.Now().Format(time.RFC3339))
+	//fmt.Printf("msg1: %s", msg1)
 	for {
 		select {
 		case <-ticker.C:
 			res := models.ChatMessage{
-				Data: msg,
+				Data: msg.Content,
 			}
 
 			data, err := json.Marshal(res)
