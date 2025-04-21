@@ -23,6 +23,7 @@ var meetings []models.Meeting
 var summary *schema.Message
 var textAll map[string]interface{}
 var HistoryChat map[string]interface{}
+var summarymap map[string]interface{}
 var message *schema.Message
 var messagess []*schema.Message
 
@@ -100,6 +101,11 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 		schema.UserMessage("这是会议的全文:" + allText),
 	}
 
+	if summarymap == nil {
+		summarymap = make(map[string]interface{})
+	}
+	summarymap[response.ID] = summary
+
 	c.JSON(consts.StatusOK, response)
 }
 
@@ -147,10 +153,13 @@ func GetMeetingSummary(ctx context.Context, c *app.RequestContext) {
 	// 5. 关键任务提取
 	// 6. 关键任务管理器
 
-	response := map[string]interface{}{
-		"content": summary.Content,
-	}
+	//response := map[string]interface{}{
+	//	"content": summary.Content,
+	//}
 
+	response := map[string]interface{}{
+		"content": summarymap[meetingID],
+	}
 	c.JSON(consts.StatusOK, response)
 }
 
