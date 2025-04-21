@@ -210,6 +210,8 @@ async function selectMeeting(meetingId) {
   currentMeetingId = meetingId;
   currentSessionId = `session_${Date.now()}`;
 
+  console.log(currentMeetingId)
+
   // Update UI
   document.querySelectorAll('.meeting-item').forEach(item => {
     item.classList.toggle('active', item.dataset.id === meetingId);
@@ -261,6 +263,15 @@ async function selectMeeting(meetingId) {
     console.error('Error:', error);
   }
 
+  // Load Todos
+    try {
+        const response = await fetch(`/todos?meeting_id=${meetingId}`);
+        const data = await response.json();
+        // Handle todos data if needed
+    } catch (error) {
+        console.error('Error:', error);
+    }
+
   // Clear chat
   chatMessages.innerHTML = '';
 }
@@ -307,4 +318,4 @@ function addMessageToChat(msgID, message, type) {
 
 // Initialize
 loadMeetings();
-loadURLState(); 
+loadURLState();

@@ -38,13 +38,14 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	participants := myutils.ExtractMeetingParticipants(reqBody)
 	startTime, endTime := myutils.ExtractBeginAndEndTime(reqBody)
 	allText := myutils.ExtractALLtext(reqBody)
-	messages1 := myllm.CreateMessagesFromTemplate("title", allText)
-	cm1 := myllm.CreateArkChatModel(ctx)
-	title := myllm.Generate(ctx, cm1, messages1)
 
-	messages2 := myllm.CreateMessagesFromTemplate("description", allText)
-	cm2 := myllm.CreateArkChatModel(ctx)
-	description := myllm.Generate(ctx, cm2, messages2)
+	model := myllm.CreateArkChatModel(ctx)
+
+	titleMessages := myllm.CreateMessagesFromTemplate("title", allText)
+	title := myllm.Generate(ctx, model, titleMessages)
+
+	descMessages := myllm.CreateMessagesFromTemplate("description", allText)
+	description := myllm.Generate(ctx, model, descMessages)
 
 	store.Meetings = append(store.Meetings, models.Meeting{
 		ID: "meeting_" + time.Now().Format("20060102150405"),
@@ -55,7 +56,6 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 			"start_time":   startTime,           // 直接获得
 			"end_time":     endTime,             // 直接获得
 			"content":      allText,             // LLM / 直接获得
-			"summary":      "",                  // 留空
 		},
 	})
 
@@ -112,16 +112,34 @@ func GetMeetingSummary(ctx context.Context, c *app.RequestContext) {
 	// 5. 关键任务提取
 	// 6. 关键任务管理器
 
-	response := map[string]interface{}{
-		"content": `
-		Meeting summary for ` + meetingID + `## Summary
-we talked about the project and the next steps, we will have a call next week to discuss the project in more detail.
+	summary := "Meeting summary for ` + meetingID + `## Summary\nwe talked about the project and the next steps, we will have a call next week to discuss the project in more detail.\n\n......"
+	todos := []string{
+		"Andy的任务是负责语音识别部分，跟进同声传译团队技术方案，做详细调研报告，需要Tom帮忙收集不同类型会议录音数据做测试。",
+		"Tom的任务是负责会议总结功能，调研现有会议总结方案并做对比分析，帮忙收集会议录音数据。",
+		"Lily的任务是负责任务管理部分，与产品团队刘工详细讨论任务管理系统对接方案，建群方便后续沟通。",
+	}
 
-......
-		`,
+	store.Summarys[meetingID] = store.Summary{
+		summary,
+		todos,
+	}
+
+	response := map[string]interface{}{
+		"content": summary,
 	}
 
 	c.JSON(consts.StatusOK, response)
+}
+
+func GetMeetingTodo(ctx context.Context, c *app.RequestContext) {
+	meetingID := c.Query("meeting_id")
+	if meetingID == "" {
+		c.JSON(consts.StatusBadRequest, utils.H{"error": "meeting_id is required"})
+		return
+	}
+	fmt.Printf("meetingID: %s\n", meetingID)
+
+	// 连接 SQLite 查询TODOS
 }
 
 // HandleChat handles the SSE chat session

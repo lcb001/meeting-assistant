@@ -8,6 +8,8 @@ import (
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
 	"log"
+	"meetingagent/models"
+	"meetingagent/store"
 	"testing"
 
 	"meetingagent/agents/myllm"
@@ -41,16 +43,29 @@ func TestAddTodo(t *testing.T) {
 		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
 	})
 
-	//meetings := store.Meetings
+	meetingID := "meeting_20231010123456"
 
-	todos := []string{
-		"Andy的任务是负责语音识别部分，跟进同声传译团队技术方案，做详细调研报告，需要Tom帮忙收集不同类型会议录音数据做测试。",
-		"Tom的任务是负责会议总结功能，调研现有会议总结方案并做对比分析，帮忙收集会议录音数据。",
-		"Lily的任务是负责任务管理部分，与产品团队刘工详细讨论任务管理系统对接方案，建群方便后续沟通。",
+	store.Meetings = append(store.Meetings, models.Meeting{
+		ID: meetingID,
+		Content: map[string]any{
+			"title":        "会议标题",
+			"description":  "会议描述",
+			"participants": []string{"Andy", "Tom", "Lily"},
+			"start_time":   "2023-10-10 12:00:00",
+			"end_time":     "2023-10-10 13:00:00",
+			"content":      "会议内容",
+		},
+	})
+
+	store.Summaries = make(map[string]store.Summary)
+	store.Summaries[meetingID] = store.Summary{
+		Content: "123",
+		Todos: []string{
+			"Andy的任务是负责语音识别部分，跟进同声传译团队技术方案，做详细调研报告，需要Tom帮忙收集不同类型会议录音数据做测试。",
+			"Tom的任务是负责会议总结功能，调研现有会议总结方案并做对比分析，帮忙收集会议录音数据。",
+			"Lily的任务是负责任务管理部分，与产品团队刘工详细讨论任务管理系统对接方案，建群方便后续沟通。",
+		},
 	}
-
-	//agent.Generate(ctx, []*schema.Message{schema.UserMessage("添加一个写代码的todo，分配给John，下周三截止")})
-	//message, _ := agent.Generate(ctx, []*schema.Message{schema.UserMessage("显示所有的todo")})
 
 	template := prompt.FromMessages(schema.FString,
 		// 系统消息模板
@@ -60,13 +75,14 @@ func TestAddTodo(t *testing.T) {
 		schema.MessagesPlaceholder("chat_history", true),
 
 		// 用户消息模板
-		schema.UserMessage("会议名称：{list}，待办事项：{todo}"),
+		schema.UserMessage("会议ID:{meetingID}, 会议名称：{list}, 待办事项：{todo}"),
 	)
 
-	for _, todo := range todos {
+	for _, todo := range store.Summaries[meetingID].Todos {
 		messages, _ := template.Format(context.Background(), map[string]any{
-			"list": "同声传译团队技术对接会",
-			"todo": todo,
+			"meetingID": store.Meetings[0].ID,
+			"list":      store.Meetings[0].Content["title"],
+			"todo":      todo,
 		})
 
 		result, _ := agent.Generate(ctx, messages)
