@@ -9,14 +9,13 @@ import (
 	"meetingagent/agents/myllm"
 	"meetingagent/models"
 	"meetingagent/myutils"
+	"meetingagent/store"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/sse"
 )
-
-var meetings []models.Meeting
 
 // CreateMeeting handles the creation of a new meeting
 func CreateMeeting(ctx context.Context, c *app.RequestContext) {
@@ -47,7 +46,7 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	cm2 := myllm.CreateArkChatModel(ctx)
 	description := myllm.Generate(ctx, cm2, messages2)
 
-	meetings = append(meetings, models.Meeting{
+	store.Meetings = append(store.Meetings, models.Meeting{
 		ID: "meeting_" + time.Now().Format("20060102150405"),
 		Content: map[string]interface{}{
 			"title":        title.Content,       // LLM 总结
@@ -55,7 +54,8 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 			"participants": participants,        // 直接获得
 			"start_time":   startTime,           // 直接获得
 			"end_time":     endTime,             // 直接获得
-			"content":      allText,             //LLM / 直接获得
+			"content":      allText,             // LLM / 直接获得
+			"summary":      "",                  // 留空
 		},
 	})
 
@@ -72,7 +72,7 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 func ListMeetings(ctx context.Context, c *app.RequestContext) {
 	// TODO: Implement actual meeting retrieval logic
 	response := models.GetMeetingsResponse{
-		Meetings: meetings,
+		Meetings: store.Meetings,
 	}
 	//response := models.GetMeetingsResponse{
 	//	Meetings: []models.Meeting{

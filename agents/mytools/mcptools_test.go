@@ -41,6 +41,8 @@ func TestAddTodo(t *testing.T) {
 		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
 	})
 
+	//meetings := store.Meetings
+
 	todos := []string{
 		"Andy的任务是负责语音识别部分，跟进同声传译团队技术方案，做详细调研报告，需要Tom帮忙收集不同类型会议录音数据做测试。",
 		"Tom的任务是负责会议总结功能，调研现有会议总结方案并做对比分析，帮忙收集会议录音数据。",
