@@ -28,7 +28,7 @@ func createTemplate(funcType string) prompt.ChatTemplate {
 	systemMessage := ""
 
 	if funcType == "title" {
-		systemMessage = "你是一个{role}，你需要用{style}的语言总结会议主题。请注意，直接输出会议主题，前面不需要前缀（如会议主题：）会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
+		systemMessage = "你是一个{role}，你需要用{style}的语言总结会议主题，不超过20字。请注意，直接输出会议主题，前面不需要前缀（如会议主题：）会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	} else if funcType == "description" {
 		systemMessage = "你是一个{role}，你需要用{style}的语言总结核心议程。请注意，直接输出核心议程，前面不需要前缀（如核心议程：）会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	} else if funcType == "summary" {

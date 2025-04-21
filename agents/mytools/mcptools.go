@@ -18,7 +18,7 @@ func initMCP(ctx context.Context) *client.Client {
 	}
 
 	// stdio client
-	cli, _ := client.NewStdioMCPClient("node", nil, "/Users/leyan/Code/todo-list-mcp/dist/index.js")
+	cli, _ := client.NewStdioMCPClient("node", nil, "/Users/leyan/Downloads/meetingagent/agents/mytools/todo-list-mcp/dist/index.js")
 	_, _ = cli.Initialize(ctx, initRequest)
 
 	return cli

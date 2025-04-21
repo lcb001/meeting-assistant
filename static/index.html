@@ -59,8 +59,8 @@
                     <div class="flex border-b mb-4">
                         <button class="tab-btn active px-4 py-2" data-tab="content">Content</button>
                         <button class="tab-btn px-4 py-2" data-tab="summary">Summary</button>
-                        <button class="tab-btn px-4 py-2" data-tab="chat">Chat</button>
                         <button class="tab-btn px-4 py-2" data-tab="todo">Todo</button>
+                        <button class="tab-btn px-4 py-2" data-tab="chat">Chat</button>
                     </div>
 
                     <!-- Content Tab -->
@@ -93,6 +93,25 @@
                         </div>
                     </div>
 
+                    <!-- Todo Tab -->
+                    <div id="todoTab" class="tab-content hidden flex-1 flex-col">
+                        <div class="p-4 bg-gray-50 rounded flex-1 flex flex-col">
+                            <h3 class="text-lg font-semibold mb-2">Meeting Todos</h3>
+                            <div id="todoList" class="flex-1 overflow-y-auto"></div>
+                            <div class="mt-4">
+                                <div class="flex gap-2">
+                                    <input type="text" id="todoInput"
+                                           class="flex-1 border rounded px-4 py-2"
+                                           placeholder="Ask something about todos">
+                                    <button id="addTodoBtn"
+                                            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                        Ask Me
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Chat Tab -->
                     <div id="chatTab" class="tab-content hidden flex-1 flex flex-col">
                         <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -106,23 +125,6 @@
                                 <button id="sendMessageBtn"
                                     class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                                     Send
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Todo Tab -->
-                    <div id="todoTab" class="tab-content hidden flex-1 flex-col">
-                        <div class="p-4 bg-gray-50 rounded flex-1 flex flex-col">
-                            <h3 class="text-lg font-semibold mb-2">Meeting Todos</h3>
-                            <div id="todoList" class="flex-1 overflow-y-auto"></div>
-                            <div class="mt-4">
-                                <input type="text" id="todoInput"
-                                    class="border rounded px-4 py-2 w-full"
-                                    placeholder="Add a new todo...">
-                                <button id="addTodoBtn"
-                                    class="bg-blue-500 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600">
-                                    Add Todo
                                 </button>
                             </div>
                         </div>
