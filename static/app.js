@@ -261,6 +261,15 @@ async function selectMeeting(meetingId) {
     console.error('Error:', error);
   }
 
+  // Load Todos
+    try {
+        const response = await fetch(`/todos?meeting_id=${meetingId}`);
+        const data = await response.json();
+        // Handle todos data if needed
+    } catch (error) {
+        console.error('Error:', error);
+    }
+
   // Clear chat
   chatMessages.innerHTML = '';
 }
@@ -307,4 +316,4 @@ function addMessageToChat(msgID, message, type) {
 
 // Initialize
 loadMeetings();
-loadURLState(); 
+loadURLState();

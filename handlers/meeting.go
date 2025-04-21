@@ -167,6 +167,17 @@ func GetMeetingSummary(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, response)
 }
 
+func GetMeetingTodo(ctx context.Context, c *app.RequestContext) {
+	meetingID := c.Query("meeting_id")
+	if meetingID == "" {
+		c.JSON(consts.StatusBadRequest, utils.H{"error": "meeting_id is required"})
+		return
+	}
+	fmt.Printf("meetingID: %s\n", meetingID)
+
+	// 连接 SQLite 查询TODOS
+}
+
 // HandleChat handles the SSE chat session
 func HandleChat(ctx context.Context, c *app.RequestContext) {
 	meetingID := c.Query("meeting_id")

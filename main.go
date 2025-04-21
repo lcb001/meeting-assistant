@@ -19,6 +19,7 @@ func main() {
 	h.POST("/meeting", handlers.CreateMeeting)
 	h.GET("/meeting", handlers.ListMeetings)
 	h.GET("/summary", handlers.GetMeetingSummary)
+	h.GET("/todo", handlers.GetMeetingTodo)
 	h.GET("/chat", handlers.HandleChat)
 
 	// Serve static files
