@@ -1,3 +1,0 @@
-[submodule "agents/mytools/todo-list-mcp"]
-	path = agents/mytools/todo-list-mcp
-	url = git@github.com:RegiByte/todo-list-mcp.git
