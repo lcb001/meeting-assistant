@@ -1,0 +1,63 @@
+### Go ###
+# 编译输出
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# 缓存 & 构建目录
+/bin/
+/build/
+/dist/
+*.coverprofile
+*.cov
+coverage.out
+
+# Go modules 临时文件
+/go.mod.tmp
+
+# IDE
+.idea/
+*.iml
+
+# 临时文件
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+---
+
+### Node.js / TypeScript ###
+# Node modules
+node_modules/
+
+# TypeScript 编译输出
+*.tsbuildinfo
+/dist/
+/build/
+/out/
+
+# 环境变量配置
+.env
+.env.local
+.env.*.local
+
+# npm/yarn lock 可按需保留
+# yarn.lock
+# package-lock.json
+
+# 调试/测试
+coverage/
+*.log
+
+# IDE
+.vscode/
+
+# 编译器缓存
+.nyc_output/
+.cache/
