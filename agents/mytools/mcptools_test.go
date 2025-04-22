@@ -7,6 +7,7 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
+	"github.com/cloudwego/hertz/pkg/common/test/assert"
 	"log"
 	"meetingagent/models"
 	"meetingagent/store"
@@ -112,4 +113,53 @@ func TestAddTodo(t *testing.T) {
 	//
 	//fmt.Printf("%+v\n", result)
 
+}
+
+func TestModifyTodo(t *testing.T) {
+	ctx := context.Background()
+
+	tools := GetMCPTools()
+	llm := myllm.CreateArkChatModel(ctx)
+
+	for _, tool := range tools {
+		info, _ := tool.Info(ctx)
+		fmt.Println("Tool Name:", info.Name)
+		fmt.Println("Tool Desc:", info.Desc)
+	}
+
+	agent, _ := react.NewAgent(ctx, &react.AgentConfig{
+		Model:       llm,
+		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
+	})
+
+	template := prompt.FromMessages(schema.FString,
+		// 系统消息模板
+		schema.SystemMessage("你是一个会议助手，需要按照用户给出的命令选择合适的工具处理待办事项，你可以使用的工具包括但不限于："+
+			"create-todo: Create a new todo item"+
+			"list-todos: List all todos"+
+			"get-todo: Get a specific todo by ID"+
+			"update-todo: Update a todo's title or description"+
+			"complete-todo: Mark a todo as completed"+
+			"delete-todo: Delete a todo"+
+			"search-todos-by-title: Search todos by title (case-insensitive partial match)"+
+			"search-todos-by-date: Search todos by creation date (format: YYYY-MM-DD)"+
+			"list-active-todos: List all non-completed todos"+
+			"summarize-active-todos: Generate a summary of all active (non-completed) todos"),
+
+		// 插入需要的对话历史（新对话的话这里不填）
+		schema.MessagesPlaceholder("chat_history", true),
+
+		// 用户消息模板
+		schema.UserMessage("现在我需要你帮我{command}"),
+	)
+
+	messages, _ := template.Format(context.Background(), map[string]any{
+		"command": "列出所有todo",
+	})
+
+	result, _ := agent.Generate(ctx, messages)
+
+	assert.Assert(t, result != nil, "Expected result to be not nil")
+
+	fmt.Printf("%+v\n", result)
 }

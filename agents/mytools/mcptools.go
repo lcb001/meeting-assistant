@@ -1,12 +1,13 @@
 package mytools
 
 import (
+	"fmt"
 	einomcp "github.com/cloudwego/eino-ext/components/tool/mcp"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
-	"log"
-	"os"
+	"meetingagent/myutils"
+	"path/filepath"
 
 	"context"
 )
@@ -19,13 +20,18 @@ func initMCP(ctx context.Context) *client.Client {
 		Version: "1.0.0",
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("无法获取工作目录:", err)
-	}
-	path := wd + "/agents/mytools/mcp-todo-list/dist/index.js"
+	//wd, err := os.Getwd()
+	//if err != nil {
+	//	log.Fatal("无法获取工作目录:", err)
+	//}
+	//path := wd + "/agents/mytools/mcp-todo-list/dist/index.js"
+
+	mcpScript := filepath.Join(myutils.GetProjectRoot(), "agents", "mytools", "mcp-todo-list", "dist", "index.js")
+
+	fmt.Print("当前工作目录:", mcpScript, "\n")
+
 	// stdio client
-	cli, _ := client.NewStdioMCPClient("node", nil, path)
+	cli, _ := client.NewStdioMCPClient("node", nil, mcpScript)
 	_, _ = cli.Initialize(ctx, initRequest)
 
 	return cli

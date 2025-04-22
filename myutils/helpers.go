@@ -1,6 +1,10 @@
 package myutils
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+	"runtime"
+)
 
 func ExtractMeetingParticipants(meeting map[string]interface{}) []string {
 	users := make(map[string]struct{})
@@ -84,4 +88,17 @@ func ExtractALLtext(meeting map[string]interface{}) string {
 		allText += user + "说：" + text
 	}
 	return allText
+}
+
+func GetProjectRoot() string {
+	// 获取当前这个文件的绝对路径（例如 myutils/helpers.go）
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("无法获取项目根路径")
+	}
+
+	// filename = .../meetingagent/myutils/helpers.go
+	// 返回 .../meetingagent
+	projectRoot := filepath.Join(filepath.Dir(filename), "../")
+	return filepath.Clean(projectRoot)
 }
