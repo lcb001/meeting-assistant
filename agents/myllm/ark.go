@@ -14,7 +14,7 @@ func CreateArkChatModel(ctx context.Context) model.ChatModel {
 		// TODO: 需要从配置文件中读取
 		APIKey:  "3a7e16b2-b1fb-4b56-81db-c390b91d6839",
 		Region:  "cn-beijing",
-		Model:   "doubao-pro-32k-241215",
+		Model:   "doubao-1-5-pro-32k-250115",
 		Timeout: &timeout,
 	})
 	if err != nil {

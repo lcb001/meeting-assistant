@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"meetingagent/database"
 	"time"
 
 	"meetingagent/handlers"
@@ -12,6 +13,8 @@ import (
 )
 
 func main() {
+	database.InitDB()
+
 	h := server.Default()
 	h.Use(Logger())
 

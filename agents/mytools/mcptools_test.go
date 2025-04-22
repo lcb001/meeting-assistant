@@ -43,7 +43,7 @@ func TestAddTodo(t *testing.T) {
 		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
 	})
 
-	meetingID := "meeting_20231010123456"
+	meetingID := "meeting_20250421215218"
 
 	store.Meetings = append(store.Meetings, models.Meeting{
 		ID: meetingID,
@@ -69,7 +69,7 @@ func TestAddTodo(t *testing.T) {
 
 	template := prompt.FromMessages(schema.FString,
 		// 系统消息模板
-		schema.SystemMessage("你是一个会议助手，需要按照给出的内容生成待办事项，标题为主要事件，使用会议名称作为所属清单名，如果有负责人则将assignee设置为负责人"),
+		schema.SystemMessage("你是一个会议助手，需要按照给出的内容生成待办事项，标题为主要事件，使用会议ID作为待办事项的meetingID，使用会议名称作为所属清单名，如果有负责人则将assignee设置为负责人。"),
 
 		// 插入需要的对话历史（新对话的话这里不填）
 		schema.MessagesPlaceholder("chat_history", true),
@@ -85,8 +85,31 @@ func TestAddTodo(t *testing.T) {
 			"todo":      todo,
 		})
 
+		fmt.Printf("%s\n", messages)
+
 		result, _ := agent.Generate(ctx, messages)
 		fmt.Printf("%+v\n", result)
 	}
+
+	//template := prompt.FromMessages(schema.FString,
+	//	// 系统消息模板
+	//	schema.SystemMessage("你是一个会议助手，需要按照指定的会议ID查找所有的待办事项"),
+	//
+	//	// 插入需要的对话历史（新对话的话这里不填）
+	//	schema.MessagesPlaceholder("chat_history", true),
+	//
+	//	// 用户消息模板
+	//	schema.UserMessage("会议ID:{meetingID}"),
+	//)
+	//
+	//messages, _ := template.Format(context.Background(), map[string]any{
+	//	"meetingID": meetingID,
+	//})
+	//
+	//fmt.Printf("%s\n", messages)
+	//
+	//result, _ := agent.Generate(ctx, messages)
+	//
+	//fmt.Printf("%+v\n", result)
 
 }

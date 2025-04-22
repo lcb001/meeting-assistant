@@ -96,16 +96,36 @@
                     <!-- Todo Tab -->
                     <div id="todoTab" class="tab-content hidden flex-1 flex-col">
                         <div class="p-4 bg-gray-50 rounded flex-1 flex flex-col">
-                            <h3 class="text-lg font-semibold mb-2">Meeting Todos</h3>
-                            <div id="todoList" class="flex-1 overflow-y-auto"></div>
+                            <h3 class="text-lg font-semibold mb-4">Meeting Todos</h3>
+
+                            <!-- Loading State -->
+                            <div id="todoLoading" class="flex-1 flex items-center justify-center">
+                                <div class="text-gray-400 animate-pulse">正在加载任务...</div>
+                            </div>
+
+                            <!-- Error State -->
+                            <div id="todoError" class="flex-1 hidden text-center">
+                                <div class="text-red-500 py-8">加载任务时出错，请重试</div>
+                                <button id="retryButton" class="px-4 py-2 bg-blue-500 text-white rounded">重试</button>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="todoEmpty" class="flex-1 hidden">
+                                <div class="text-gray-400 italic text-center py-8">暂无任务</div>
+                            </div>
+
+                            <!-- Todo List -->
+                            <div id="todoList" class="flex-1 overflow-y-auto space-y-3 hidden"></div>
+
+                            <!-- Ask Input -->
                             <div class="mt-4">
                                 <div class="flex gap-2">
                                     <input type="text" id="todoInput"
                                            class="flex-1 border rounded px-4 py-2"
-                                           placeholder="Ask something about todos">
-                                    <button id="addTodoBtn"
+                                           placeholder="询问关于任务的问题">
+                                    <button id="askTodoBtn"
                                             class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                        Ask Me
+                                        询问
                                     </button>
                                 </div>
                             </div>
