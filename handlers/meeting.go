@@ -4,9 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cloudwego/eino/components/prompt"
+	"github.com/cloudwego/eino/compose"
+	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
 	"io"
 	"log"
+	"meetingagent/agents/mytools"
+	"meetingagent/database"
+	"strings"
 	"time"
 
 	"meetingagent/agents/myllm"
@@ -18,6 +24,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/sse"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // var meetings []models.Meeting
@@ -121,6 +129,55 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	summarymap[response.ID] = []*schema.Message{
 		summary,
 	}
+
+	// 解析summary中的todo，写入数据库
+	jsonStr := summarymap[response.ID].([]*schema.Message)[0].Content
+	var result map[string]interface{}
+	err = json.Unmarshal([]byte(jsonStr), &result)
+	if err != nil {
+		fmt.Println("解析失败:", err)
+		return
+	}
+
+	todos := strings.Split(result["关键任务提取"].(string), "；")
+
+	for _, todo := range todos {
+		todo = strings.TrimSpace(todo)
+		fmt.Printf("%s\n", todo)
+	}
+
+	tools := mytools.GetMCPTools()
+	llm := myllm.CreateArkChatModel(ctx)
+
+	agent, _ := react.NewAgent(ctx, &react.AgentConfig{
+		Model:       llm,
+		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
+	})
+
+	template := prompt.FromMessages(schema.FString,
+		// 系统消息模板
+		schema.SystemMessage("你是一个会议助手，需要按照给出的内容生成待办事项，标题为主要事件，使用会议ID作为待办事项的meeting_id，使用会议名称作为所属清单名，如果有负责人则将assignee设置为负责人。"),
+
+		// 插入需要的对话历史（新对话的话这里不填）
+		schema.MessagesPlaceholder("chat_history", true),
+
+		// 用户消息模板
+		schema.UserMessage("会议ID:{meetingID}, 会议名称：{list}, 待办事项：{todo}"),
+	)
+
+	for _, todo := range todos {
+		messages, _ := template.Format(context.Background(), map[string]any{
+			"meetingID": store.Meetings[len(store.Meetings)-1].ID,
+			"list":      store.Meetings[len(store.Meetings)-1].Content["title"],
+			"todo":      todo,
+		})
+
+		fmt.Printf("%s\n", messages)
+
+		result, _ := agent.Generate(ctx, messages)
+		fmt.Printf("%+v\n", result)
+	}
+
 	c.JSON(consts.StatusOK, response)
 }
 
@@ -173,6 +230,25 @@ func GetMeetingSummary(ctx context.Context, c *app.RequestContext) {
 	}
 
 	c.JSON(consts.StatusOK, response)
+}
+
+func GetMeetingTodo(ctx context.Context, c *app.RequestContext) {
+	meetingID := c.Query("meeting_id")
+	if meetingID == "" {
+		c.JSON(consts.StatusBadRequest, utils.H{"error": "meeting_id is required"})
+		return
+	}
+
+	todos, err := database.GetTodosByMeetingID(meetingID)
+	if err != nil {
+		c.JSON(500, map[string]string{"error": "查询失败"})
+		return
+	}
+
+	c.JSON(200, map[string]any{
+		"meeting_id": meetingID,
+		"todos":      todos,
+	})
 }
 
 // HandleChat handles the SSE chat session

@@ -61,3 +61,10 @@ coverage/
 # 编译器缓存
 .nyc_output/
 .cache/
+
+# 数据库
+*.sqlite
+*.db
+
+# 配置文件
+config.yaml

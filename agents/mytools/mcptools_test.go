@@ -7,7 +7,10 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
+	"github.com/cloudwego/hertz/pkg/common/test/assert"
 	"log"
+	"meetingagent/models"
+	"meetingagent/store"
 	"testing"
 
 	"meetingagent/agents/myllm"
@@ -41,36 +44,122 @@ func TestAddTodo(t *testing.T) {
 		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
 	})
 
-	//meetings := store.Meetings
+	meetingID := "meeting_20250421215218"
 
-	todos := []string{
-		"Andy的任务是负责语音识别部分，跟进同声传译团队技术方案，做详细调研报告，需要Tom帮忙收集不同类型会议录音数据做测试。",
-		"Tom的任务是负责会议总结功能，调研现有会议总结方案并做对比分析，帮忙收集会议录音数据。",
-		"Lily的任务是负责任务管理部分，与产品团队刘工详细讨论任务管理系统对接方案，建群方便后续沟通。",
+	store.Meetings = append(store.Meetings, models.Meeting{
+		ID: meetingID,
+		Content: map[string]any{
+			"title":        "会议标题",
+			"description":  "会议描述",
+			"participants": []string{"Andy", "Tom", "Lily"},
+			"start_time":   "2023-10-10 12:00:00",
+			"end_time":     "2023-10-10 13:00:00",
+			"content":      "会议内容",
+		},
+	})
+
+	store.Summaries = make(map[string]store.Summary)
+	store.Summaries[meetingID] = store.Summary{
+		Content: "123",
+		Todos: []string{
+			"Andy的任务是负责语音识别部分，跟进同声传译团队技术方案，做详细调研报告，需要Tom帮忙收集不同类型会议录音数据做测试。",
+			"Tom的任务是负责会议总结功能，调研现有会议总结方案并做对比分析，帮忙收集会议录音数据。",
+			"Lily的任务是负责任务管理部分，与产品团队刘工详细讨论任务管理系统对接方案，建群方便后续沟通。",
+		},
 	}
-
-	//agent.Generate(ctx, []*schema.Message{schema.UserMessage("添加一个写代码的todo，分配给John，下周三截止")})
-	//message, _ := agent.Generate(ctx, []*schema.Message{schema.UserMessage("显示所有的todo")})
 
 	template := prompt.FromMessages(schema.FString,
 		// 系统消息模板
-		schema.SystemMessage("你是一个会议助手，需要按照给出的内容生成待办事项，标题为主要事件，使用会议名称作为所属清单名，如果有负责人则将assignee设置为负责人"),
+		schema.SystemMessage("你是一个会议助手，需要按照给出的内容生成待办事项，标题为主要事件，使用会议ID作为待办事项的meetingID，使用会议名称作为所属清单名，如果有负责人则将assignee设置为负责人。"),
 
 		// 插入需要的对话历史（新对话的话这里不填）
 		schema.MessagesPlaceholder("chat_history", true),
 
 		// 用户消息模板
-		schema.UserMessage("会议名称：{list}，待办事项：{todo}"),
+		schema.UserMessage("会议ID:{meetingID}, 会议名称：{list}, 待办事项：{todo}"),
 	)
 
-	for _, todo := range todos {
+	for _, todo := range store.Summaries[meetingID].Todos {
 		messages, _ := template.Format(context.Background(), map[string]any{
-			"list": "同声传译团队技术对接会",
-			"todo": todo,
+			"meetingID": store.Meetings[0].ID,
+			"list":      store.Meetings[0].Content["title"],
+			"todo":      todo,
 		})
+
+		fmt.Printf("%s\n", messages)
 
 		result, _ := agent.Generate(ctx, messages)
 		fmt.Printf("%+v\n", result)
 	}
 
+	//template := prompt.FromMessages(schema.FString,
+	//	// 系统消息模板
+	//	schema.SystemMessage("你是一个会议助手，需要按照指定的会议ID查找所有的待办事项"),
+	//
+	//	// 插入需要的对话历史（新对话的话这里不填）
+	//	schema.MessagesPlaceholder("chat_history", true),
+	//
+	//	// 用户消息模板
+	//	schema.UserMessage("会议ID:{meetingID}"),
+	//)
+	//
+	//messages, _ := template.Format(context.Background(), map[string]any{
+	//	"meetingID": meetingID,
+	//})
+	//
+	//fmt.Printf("%s\n", messages)
+	//
+	//result, _ := agent.Generate(ctx, messages)
+	//
+	//fmt.Printf("%+v\n", result)
+
+}
+
+func TestModifyTodo(t *testing.T) {
+	ctx := context.Background()
+
+	tools := GetMCPTools()
+	llm := myllm.CreateArkChatModel(ctx)
+
+	for _, tool := range tools {
+		info, _ := tool.Info(ctx)
+		fmt.Println("Tool Name:", info.Name)
+		fmt.Println("Tool Desc:", info.Desc)
+	}
+
+	agent, _ := react.NewAgent(ctx, &react.AgentConfig{
+		Model:       llm,
+		ToolsConfig: compose.ToolsNodeConfig{Tools: tools},
+	})
+
+	template := prompt.FromMessages(schema.FString,
+		// 系统消息模板
+		schema.SystemMessage("你是一个会议助手，需要按照用户给出的命令选择合适的工具处理待办事项，你可以使用的工具包括但不限于："+
+			"create-todo: Create a new todo item"+
+			"list-todos: List all todos"+
+			"get-todo: Get a specific todo by ID"+
+			"update-todo: Update a todo's title or description"+
+			"complete-todo: Mark a todo as completed"+
+			"delete-todo: Delete a todo"+
+			"search-todos-by-title: Search todos by title (case-insensitive partial match)"+
+			"search-todos-by-date: Search todos by creation date (format: YYYY-MM-DD)"+
+			"list-active-todos: List all non-completed todos"+
+			"summarize-active-todos: Generate a summary of all active (non-completed) todos"),
+
+		// 插入需要的对话历史（新对话的话这里不填）
+		schema.MessagesPlaceholder("chat_history", true),
+
+		// 用户消息模板
+		schema.UserMessage("现在我需要你帮我{command}"),
+	)
+
+	messages, _ := template.Format(context.Background(), map[string]any{
+		"command": "列出所有todo",
+	})
+
+	result, _ := agent.Generate(ctx, messages)
+
+	assert.Assert(t, result != nil, "Expected result to be not nil")
+
+	fmt.Printf("%+v\n", result)
 }

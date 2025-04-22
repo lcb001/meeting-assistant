@@ -185,6 +185,71 @@ async function handleFileUpload(e) {
   }
 }
 
+
+function generateColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = hash % 360;
+  return {
+    backgroundColor: `hsl(${hue}, 70%, 90%)`,
+    color: `hsl(${hue}, 70%, 30%)`
+  };
+}
+
+function createTodoItem(todo) {
+  const item = document.createElement('div');
+  item.className = 'p-4 bg-white shadow rounded-lg border-l-4 border-blue-500 hover:shadow-md transition duration-200';
+
+  // 为用户标签生成颜色
+  const assigneeStyle = generateColor(todo.Assignee);
+
+  item.innerHTML = `
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h4 class="font-medium text-gray-800">${todo.Title}</h4>
+                <p class="text-sm text-gray-600 mt-1">${todo.Description}</p>
+            </div>
+            <span class="px-2 py-1 text-xs rounded-full" 
+                  style="background-color: ${assigneeStyle.backgroundColor}; color: ${assigneeStyle.color}">
+                ${todo.Assignee}
+            </span>
+        </div>
+        <div class="flex items-center mt-3 text-xs text-gray-500">
+            <span class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                ${todo.List}
+            </span>
+            ${todo.CompletedAt ?
+      `<span class="ml-3 bg-green-100 text-green-800 px-2 py-0.5 rounded">已完成</span>` :
+      `<span class="ml-3 bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">进行中</span>`
+  }
+        </div>
+    `;
+
+  return item;
+}
+
+function showLoading(show) {
+  document.getElementById('todoLoading').style.display = show ? 'flex' : 'none';
+}
+
+function showError(show) {
+  document.getElementById('todoError').style.display = show ? 'block' : 'none';
+}
+
+function showEmpty(show) {
+  document.getElementById('todoEmpty').style.display = show ? 'block' : 'none';
+}
+
+function showTodoList(show) {
+  document.getElementById('todoList').style.display = show ? 'block' : 'none';
+}
+
+
 async function loadMeetings() {
   try {
     const response = await fetch('/meeting');
@@ -261,6 +326,43 @@ async function selectMeeting(meetingId) {
     console.error('Error:', error);
   }
 
+  // Load Todos
+  try {
+    // 从后端API获取数据
+    const response = await fetch(`/todo?meeting_id=${meetingId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // 处理获取到的数据
+    const todoListEl = document.getElementById('todoList');
+    todoListEl.innerHTML = ''; // 清空旧内容
+
+    if (Array.isArray(data.todos) && data.todos.length > 0) {
+      // 有数据时渲染任务列表
+      data.todos.forEach(todo => {
+        const todoItem = createTodoItem(todo);
+        todoListEl.appendChild(todoItem);
+      });
+
+      showTodoList(true);
+    } else {
+      // 没有数据时显示空状态
+      showEmpty(true);
+    }
+
+    console.log("任务加载成功:", data);
+  } catch (error) {
+    // 显示错误状态
+    console.error('加载任务时出错:', error);
+    showError(true);
+  } finally {
+    // 隐藏加载状态
+    showLoading(false);
+  }
+
   // Clear chat
   chatMessages.innerHTML = '';
 }
@@ -307,4 +409,4 @@ function addMessageToChat(msgID, message, type) {
 
 // Initialize
 loadMeetings();
-loadURLState(); 
+loadURLState();

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"meetingagent/database"
 	"time"
 
 	"meetingagent/handlers"
@@ -12,6 +13,8 @@ import (
 )
 
 func main() {
+	database.InitDB()
+
 	h := server.Default()
 	h.Use(Logger())
 
@@ -19,6 +22,7 @@ func main() {
 	h.POST("/meeting", handlers.CreateMeeting)
 	h.GET("/meeting", handlers.ListMeetings)
 	h.GET("/summary", handlers.GetMeetingSummary)
+	h.GET("/todo", handlers.GetMeetingTodo)
 	h.GET("/chat", handlers.HandleChat)
 
 	// Serve static files

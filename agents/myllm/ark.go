@@ -4,17 +4,24 @@ import (
 	"context"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/components/model"
+	"github.com/spf13/viper"
 	"log"
 	"time"
 )
 
 func CreateArkChatModel(ctx context.Context) model.ChatModel {
+	viper.SetConfigFile("config.yaml")
+	viper.ReadInConfig()
+	apiKey := viper.GetString("ark.api_key")
+	region := viper.GetString("ark.region")
+	model := viper.GetString("ark.model")
+
 	timeout := 30 * time.Second
 	chatModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
 		// TODO: 需要从配置文件中读取
-		APIKey:  "e4900371-625c-413c-83d2-c22f1f6efc9c",
-		Region:  "cn-beijing",
-		Model:   "doubao-pro-32k-241215",
+		APIKey:  apiKey,
+		Region:  region,
+		Model:   model,
 		Timeout: &timeout,
 	})
 	if err != nil {
