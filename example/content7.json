@@ -1,0 +1,52 @@
+{
+  "contents": [
+    {
+      "time_from": "00:00:00",
+      "time_to": "00:00:20",
+      "user": "Daniel",
+      "content": {
+        "text": "我们今天要讨论的是新员工培训流程的问题。最近几个新同事反馈说入职流程比较混乱，信息分散。"
+      }
+    },
+    {
+      "time_from": "00:00:21",
+      "time_to": "00:00:45",
+      "user": "Sophie",
+      "content": {
+        "text": "对，尤其是权限申请和开发环境搭建，有些文档根本没更新。"
+      }
+    },
+    {
+      "time_from": "00:00:46",
+      "time_to": "00:01:10",
+      "user": "Chloe",
+      "content": {
+        "text": "我建议建立一个统一的入职页面，把流程和关键资源整理清楚。我们可以做个FAQ板块。"
+      }
+    },
+    {
+      "time_from": "00:01:11",
+      "time_to": "00:01:30",
+      "user": "Daniel",
+      "content": {
+        "text": "好主意。Sophie，你来负责汇总流程文档，我负责FAQ结构搭建。"
+      }
+    },
+    {
+      "time_from": "00:01:31",
+      "time_to": "00:01:45",
+      "user": "Sophie",
+      "content": {
+        "text": "OK，我本周内搞定。"
+      }
+    },
+    {
+      "time_from": "00:01:46",
+      "time_to": "00:02:00",
+      "user": "Chloe",
+      "content": {
+        "text": "我可以帮忙做一版页面原型，供大家参考。"
+      }
+    }
+  ]
+}
