@@ -5,6 +5,8 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
+	"log"
+	"os"
 
 	"context"
 )
@@ -17,8 +19,13 @@ func initMCP(ctx context.Context) *client.Client {
 		Version: "1.0.0",
 	}
 
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("无法获取工作目录:", err)
+	}
+	path := wd + "/agents/mytools/mcp-todo-list/dist/index.js"
 	// stdio client
-	cli, _ := client.NewStdioMCPClient("node", nil, "/Users/leyan/Downloads/meetingagent/agents/mytools/todo-list-mcp/dist/index.js")
+	cli, _ := client.NewStdioMCPClient("node", nil, path)
 	_, _ = cli.Initialize(ctx, initRequest)
 
 	return cli
