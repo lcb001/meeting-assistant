@@ -28,20 +28,26 @@ var summarymap map[string]interface{}
 var message *schema.Message
 var messagess []*schema.Message
 
-func streamoutput(title *schema.StreamReader[*schema.Message]) {
+func streamoutput(title *schema.StreamReader[*schema.Message]) string {
+	var streammes string
 	i := 0
 	for {
 		var err error
 		message, err = title.Recv()
 		if err == io.EOF {
-			return
+			return streammes
 		}
 		if err != nil {
 			log.Fatalf("recv failed: %v", err)
 		}
-		log.Printf("message[%d]: %+v\n", i, message)
+		//log.Printf("message[%d]: %+v\n", i, message)
 		i++
+
+		streammes += message.Content
+		//log.Printf("streammes: %s\n", streammes)
 	}
+
+	return streammes
 }
 
 // CreateMeeting handles the creation of a new meeting
@@ -75,7 +81,9 @@ func CreateMeeting(ctx context.Context, c *app.RequestContext) {
 	cm2 := myllm.CreateArkChatModel(ctx)
 	description := myllm.Generate(ctx, cm2, messages2)
 
-	messages3 := myllm.CreateMessagesFromTemplate("summary", allText, "", nil)
+	//会议时间加上内容
+	summaryinput := "会议开始时间是" + startTime + "，会议结束时间是" + endTime + "，会议内容是" + allText
+	messages3 := myllm.CreateMessagesFromTemplate("summary", summaryinput, "", nil)
 	cm3 := myllm.CreateArkChatModel(ctx)
 	summary = myllm.Generate(ctx, cm3, messages3)
 
@@ -209,6 +217,10 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 	msg := myllm.Generate(ctx, cm, messages)
 	fmt.Printf("msg: %s", msg.Content)
 
+	msgstream := myllm.Stream(ctx, cm, messages)
+	//fmt.Printf("msg1: %v\n", msgstream)
+	msgstreamtostring := streamoutput(msgstream)
+	//fmt.Printf("msg2: %s\n", msgstreamtostring)
 	//HistoryChat[meetingID] = []*schema.Message{
 	//	schema.AssistantMessage(msg.Content, nil),
 	//}
@@ -231,7 +243,7 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 		select {
 		case <-ticker.C:
 			res := models.ChatMessage{
-				Data: msg.Content,
+				Data: msgstreamtostring,
 			}
 
 			data, err := json.Marshal(res)

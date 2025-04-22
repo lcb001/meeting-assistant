@@ -18,7 +18,6 @@ package myllm
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/cloudwego/eino/components/prompt"
@@ -35,7 +34,7 @@ func createTemplate(funcType string) prompt.ChatTemplate {
 	} else if funcType == "summary" {
 		systemMessage = "你是一个{role}，你需要用{style}的语言提炼会议摘要。以json格式返回内容，不要包含换行符，不要将特殊字符转义，至少包括以下内容1. 会议主题 2. 会议参与者3. 会议时间4. 会议内容5. 关键任务提取(这部分必须以以下格式总结，小红的任务是扫地，把其中的人称代词转换成具体的负责人，且需要把相同人们的做的事组合在一起，比如小红的任务是扫地、拖地)。请注意，直接输出会议摘要，前面不需要前缀（如会议摘要：），会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	} else if funcType == "chat" {
-		systemMessage = "你是一个{role}，你需要用{style}的语言。请注意，你需要结合会议的全文，回答用户问题，会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
+		systemMessage = "你是一个{role}，你需要用{style}的语言。请注意，你需要结合会议的全文和用户的对话历史，回答用户问题，会议内容可能会包含一些技术术语和行业术语，你需要根据上下文进行理解和总结。"
 	}
 
 	// 创建模板，使用 FString 格式
@@ -58,10 +57,10 @@ func CreateMessagesFromTemplate(funcType string, allText string, ask string, His
 	if ask != "" {
 		question += ("下面是我的问题：" + ask)
 	}
-	fmt.Printf("HistoryChat2: %s", HistoryChat)
-	for _, v := range HistoryChat {
-		fmt.Printf("HistoryChat3: %s", v.Content)
-	}
+	//fmt.Printf("HistoryChat2: %s", HistoryChat)
+	//for _, v := range HistoryChat {
+	//	fmt.Printf("HistoryChat3: %s", v.Content)
+	//}
 	// 使用模板生成消息
 	messages, err := template.Format(context.Background(), map[string]any{
 		"role":  "会议总结助手",
