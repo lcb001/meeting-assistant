@@ -12,9 +12,9 @@ func CreateArkChatModel(ctx context.Context) model.ChatModel {
 	timeout := 30 * time.Second
 	chatModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
 		// TODO: 需要从配置文件中读取
-		APIKey:  "3a7e16b2-b1fb-4b56-81db-c390b91d6839",
+		APIKey:  "e4900371-625c-413c-83d2-c22f1f6efc9c",
 		Region:  "cn-beijing",
-		Model:   "doubao-1-5-pro-32k-250115",
+		Model:   "doubao-pro-32k-241215",
 		Timeout: &timeout,
 	})
 	if err != nil {

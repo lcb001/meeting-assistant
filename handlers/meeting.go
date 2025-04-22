@@ -219,7 +219,7 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 
 	msgstream := myllm.Stream(ctx, cm, messages)
 	//fmt.Printf("msg1: %v\n", msgstream)
-	msgstreamtostring := streamoutput(msgstream)
+	//msgstreamtostring := streamoutput(msgstream)
 	//fmt.Printf("msg2: %s\n", msgstreamtostring)
 	//HistoryChat[meetingID] = []*schema.Message{
 	//	schema.AssistantMessage(msg.Content, nil),
@@ -228,22 +228,55 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 	HistoryChat[meetingID] = messagess
 	fmt.Printf("HistoryChat: %s", HistoryChat[meetingID].([]*schema.Message))
 	// This is a simple example that sends a message every second
-	ticker := time.NewTicker(time.Millisecond * 1000)
-	stopChan := make(chan struct{})
-	go func() {
-		time.AfterFunc(time.Second, func() {
-			ticker.Stop()
-			close(stopChan)
-		})
-	}()
+	ticker := time.NewTicker(time.Millisecond * 1)
+	//stopChan := make(chan struct{})
+	//go func() {
+	//	time.AfterFunc(time.Second, func() {
+	//		ticker.Stop()
+	//		close(stopChan)
+	//	})
+	//}()
 
 	//msg1 := fmt.Sprintf("Fake sample chat message: %s\n", time.Now().Format(time.RFC3339))
 	//fmt.Printf("msg1: %s", msg1)
+	//for {
+	//	select {
+	//	case <-ticker.C:
+	//		res := models.ChatMessage{
+	//			Data: msgstreamtostring,
+	//		}
+	//
+	//		data, err := json.Marshal(res)
+	//		if err != nil {
+	//			return
+	//		}
+	//
+	//		event := &sse.Event{
+	//			Data: data,
+	//		}
+	//
+	//		if err := stream.Publish(event); err != nil {
+	//			return
+	//		}
+	//	case <-stopChan:
+	//		return
+	//	case <-ctx.Done():
+	//		return
+	//	}
+	//}
+	stopChan1 := make(chan struct{})
+	var mes *schema.Message
 	for {
+
 		select {
 		case <-ticker.C:
+			var err error
+			mes, err = msgstream.Recv()
+			if err == io.EOF {
+				close(stopChan1)
+			}
 			res := models.ChatMessage{
-				Data: msgstreamtostring,
+				Data: mes.Content,
 			}
 
 			data, err := json.Marshal(res)
@@ -258,7 +291,7 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 			if err := stream.Publish(event); err != nil {
 				return
 			}
-		case <-stopChan:
+		case <-stopChan1:
 			return
 		case <-ctx.Done():
 			return
