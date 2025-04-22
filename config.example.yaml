@@ -1,0 +1,4 @@
+ark:
+  api_key: "your-api-key-here"
+  region: "cn-beijing"
+  model: "doubao-1-5-pro-32k-250115"

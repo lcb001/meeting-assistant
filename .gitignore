@@ -65,3 +65,6 @@ coverage/
 # 数据库
 *.sqlite
 *.db
+
+# 配置文件
+config.yaml
